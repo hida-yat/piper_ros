@@ -28,7 +28,7 @@ sudo apt install ros-humble-moveit*
 sudo apt-get install ros-humble-control* ros-humble-joint-trajectory-controller ros-humble-joint-state-* ros-humble-gripper-controllers ros-humble-trajectory-msgs
 ```
 
-RViz中显示机械臂模型（MotionPlanning插件）以及在Gazebo中让机械臂受控（而不是因为没有控制器而瘫软下垂），还需要额外安装：
+RVizでロボットアームのモデルを表示する（MotionPlanningプラグイン）ため、およびGazebo内でロボットアームを制御下に置く（コントローラが無くて脱力しないようにする）ためには、以下も追加でインストールが必要：
 
 ```bash
 sudo apt install ros-humble-moveit-ros-visualization ros-humble-gazebo-ros2-control
@@ -156,16 +156,16 @@ source ~/.bashrc
 LC_NUMERIC=en_US.UTF-8 ros2 launch piper_moveit_config demo.launch.py
 ```
 
-### 5.3 RViz中不显示机械臂模型 / Gazebo中机械臂瘫软下垂没有力
+### 5.3 RVizにロボットアームのモデルが表示されない／Gazebo内でロボットアームが脱力してだらんとする
 
-1 确认已安装第2节中的 `ros-humble-moveit-ros-visualization`（RViz的MotionPlanning插件所在包）和 `ros-humble-gazebo-ros2-control`（Gazebo里机械臂控制器所在包）。缺少前者RViz里看不到机械臂，缺少后者Gazebo里的机械臂完全没有控制器、靠重力瘫软。
+1 第2節の `ros-humble-moveit-ros-visualization`（RVizのMotionPlanningプラグインを提供するパッケージ）と `ros-humble-gazebo-ros2-control`（Gazebo内のロボットアームのコントローラを提供するパッケージ）がインストール済みか確認する。前者が無いとRVizにロボットアームが表示されず、後者が無いとGazebo内のロボットアームにコントローラが一切無く、重力に任せて脱力する。
 
-2 **切勿同时运行 `demo.launch.py` 和 Gazebo。** `demo.launch.py` 会自己启动一个独立的假机械臂（`FakeSystem`）和一个同名的 `controller_manager`，与Gazebo自己的 `controller_manager` 冲突，导致RViz里看起来能规划、执行，但实际动的是假机械臂，Gazebo里的机械臂纹丝不动。仿真请始终按以下顺序启动：
+2 **`demo.launch.py` とGazeboを同時に実行しないこと。** `demo.launch.py` は独自の偽ロボットアーム（`FakeSystem`）と、それ用の同名の `controller_manager` を起動する。これがGazebo自身の `controller_manager` と衝突し、RViz上ではプランニング・実行に成功しているように見えても、実際に動いているのは偽のロボットアームであり、Gazebo内のロボットアームは全く動かない。シミュレーションでは必ず以下の順序で起動すること：
 
 ```bash
-# 1) 先启动Gazebo（见 4.1.1）
-ros2 launch piper_gazebo piper_gazebo.launch.py   # 或 piper_no_gripper_gazebo.launch.py
+# 1) 先にGazeboを起動（4.1.1参照）
+ros2 launch piper_gazebo piper_gazebo.launch.py   # またはpiper_no_gripper_gazebo.launch.py
 
-# 2) 再启动Moveit2（不是demo.launch.py）
-ros2 launch piper_with_gripper_moveit piper_moveit.launch.py   # 或 piper_no_gripper_moveit
+# 2) その後Moveit2を起動（demo.launch.pyではない）
+ros2 launch piper_with_gripper_moveit piper_moveit.launch.py   # またはpiper_no_gripper_moveit
 ```
