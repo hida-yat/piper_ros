@@ -28,6 +28,12 @@ After installing Moveit2, install the necessary dependencies:
 sudo apt-get install ros-humble-control* ros-humble-joint-trajectory-controller ros-humble-joint-state-* ros-humble-gripper-controllers ros-humble-trajectory-msgs
 ```
 
+To see the robot model in RViz (the MotionPlanning plugin) and to have the arm actually respond to commands in Gazebo (instead of going limp with no controller holding it), also install:
+
+```bash
+sudo apt install ros-humble-moveit-ros-visualization ros-humble-gazebo-ros2-control
+```
+
 If your system locale is not set to English, configure it as follows:
 
 ```bash
@@ -144,4 +150,18 @@ Alternatively, set `LC_NUMERIC=en_US.UTF-8` before launching Moveit:
 
 ```bash
 LC_NUMERIC=en_US.UTF-8 ros2 launch piper_moveit_config demo.launch.py
+```
+
+### 5.3 RViz doesn't show the robot model / the arm goes limp in Gazebo
+
+1. Make sure you installed `ros-humble-moveit-ros-visualization` (provides RViz's MotionPlanning plugin) and `ros-humble-gazebo-ros2-control` (provides the controllers for the arm inside Gazebo) from Section 2. Without the former, RViz can't render the robot at all; without the latter, the arm in Gazebo has no controller and just sags under gravity.
+
+2. **Never run `demo.launch.py` together with Gazebo.** `demo.launch.py` starts its own standalone fake robot (`FakeSystem`) with its own `controller_manager`, which has the same name as Gazebo's `controller_manager` and conflicts with it. RViz will appear to plan and execute successfully, but it's actually driving the fake robot — the arm in Gazebo won't move at all. For simulation, always launch in this order:
+
+```bash
+# 1) Start Gazebo first (see 4.1.1)
+ros2 launch piper_gazebo piper_gazebo.launch.py   # or piper_no_gripper_gazebo.launch.py
+
+# 2) Then start Moveit2 (not demo.launch.py)
+ros2 launch piper_with_gripper_moveit piper_moveit.launch.py   # or piper_no_gripper_moveit
 ```

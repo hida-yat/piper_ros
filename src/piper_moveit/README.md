@@ -28,6 +28,12 @@ sudo apt install ros-humble-moveit*
 sudo apt-get install ros-humble-control* ros-humble-joint-trajectory-controller ros-humble-joint-state-* ros-humble-gripper-controllers ros-humble-trajectory-msgs
 ```
 
+RViz中显示机械臂模型（MotionPlanning插件）以及在Gazebo中让机械臂受控（而不是因为没有控制器而瘫软下垂），还需要额外安装：
+
+```bash
+sudo apt install ros-humble-moveit-ros-visualization ros-humble-gazebo-ros2-control
+```
+
 若系统语言区域设置不为英文区域，须设置
 
 ```bash
@@ -148,4 +154,18 @@ source ~/.bashrc
 
 ```bash
 LC_NUMERIC=en_US.UTF-8 ros2 launch piper_moveit_config demo.launch.py
+```
+
+### 5.3 RViz中不显示机械臂模型 / Gazebo中机械臂瘫软下垂没有力
+
+1 确认已安装第2节中的 `ros-humble-moveit-ros-visualization`（RViz的MotionPlanning插件所在包）和 `ros-humble-gazebo-ros2-control`（Gazebo里机械臂控制器所在包）。缺少前者RViz里看不到机械臂，缺少后者Gazebo里的机械臂完全没有控制器、靠重力瘫软。
+
+2 **切勿同时运行 `demo.launch.py` 和 Gazebo。** `demo.launch.py` 会自己启动一个独立的假机械臂（`FakeSystem`）和一个同名的 `controller_manager`，与Gazebo自己的 `controller_manager` 冲突，导致RViz里看起来能规划、执行，但实际动的是假机械臂，Gazebo里的机械臂纹丝不动。仿真请始终按以下顺序启动：
+
+```bash
+# 1) 先启动Gazebo（见 4.1.1）
+ros2 launch piper_gazebo piper_gazebo.launch.py   # 或 piper_no_gripper_gazebo.launch.py
+
+# 2) 再启动Moveit2（不是demo.launch.py）
+ros2 launch piper_with_gripper_moveit piper_moveit.launch.py   # 或 piper_no_gripper_moveit
 ```
