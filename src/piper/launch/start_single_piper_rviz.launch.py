@@ -1,5 +1,3 @@
-# piper_launch.py
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -84,3 +82,4 @@ def generate_launch_description():
         gripper_val_mutiple_arg,
         piper_ctrl_node
     ])
+
