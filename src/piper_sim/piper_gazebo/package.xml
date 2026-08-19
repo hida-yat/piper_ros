@@ -10,11 +10,17 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>joint_state_publisher</exec_depend>
   <exec_depend>joint_state_publisher_gui</exec_depend>
-  
+
   <!-- <exec_depend>rviz</exec_depend> -->
   <exec_depend>rviz2</exec_depend>
   <exec_depend>xacro</exec_depend>
-  
+
+  <!-- Gazebo側でPiperを動かすのに必須。無いと libgazebo_ros2_control.so の
+       読み込みに失敗し、コントローラが一切乗らずアームが脱力する。 -->
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>gazebo_ros2_control</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

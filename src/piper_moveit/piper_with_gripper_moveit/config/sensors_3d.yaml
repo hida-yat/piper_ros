@@ -1,6 +1,8 @@
-sensors:
-  - default_sensor
-  - kinect_depthimage
+# Piperにはデプスカメラが無いので、センサープラグインは無効化する。
+# 有効にすると DepthImageOctomapUpdater の自己フィルタ用メッシュレンダラが
+# GLXコンテキスト生成に失敗し、move_groupが "X Error: BadAccess
+# (X_GLXMakeContextCurrent)" で即死する。
+sensors: []
 default_sensor:
   far_clipping_plane_distance: 5.0
   filtered_cloud_topic: filtered_cloud

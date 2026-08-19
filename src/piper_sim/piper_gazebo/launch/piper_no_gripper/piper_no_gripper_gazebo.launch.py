@@ -52,17 +52,24 @@ def generate_launch_description():
 
     # gazebo在加载urdf时，根据urdf的设定，会启动一个joint_states节点?
     # 关节状态发布器
-    load_joint_state_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'joint_state_broadcaster'],
+    # 用 controller_manager/spawner 代替 `ros2 control load_controller`：
+    # spawner 会自行等待并重试 controller_manager 服务上线，
+    # 而 `ros2 control load_controller` 在 controller_manager（由 gazebo_ros2_control
+    # 插件异步创建）尚未来得及被发现时会永久卡住，导致控制器从未加载、
+    # 机械臂在 Gazebo 中因没有生效的控制器而瘫软下垂。
+    load_joint_state_controller = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['joint_state_broadcaster', '--controller-manager-timeout', '60'],
         output='screen'
     )
 
     # 路径执行控制器，也就是那个action？
     # 系统是如何知道有my_group_controller这个控制器的存在？
-    load_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 
-             'arm_controller'],
+    load_joint_trajectory_controller = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['arm_controller', '--controller-manager-timeout', '60'],
         output='screen'
         )
 

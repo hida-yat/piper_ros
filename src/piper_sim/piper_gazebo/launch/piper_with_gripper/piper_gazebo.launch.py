@@ -48,27 +48,36 @@ def generate_launch_description():
         arguments=['-entity', robot_name_in_model,  '-topic', 'robot_description'], output='screen')
 
     # 关节状态发布器
-    load_joint_state_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'joint_state_broadcaster'],
+    # 用 controller_manager/spawner 代替 `ros2 control load_controller`：
+    # spawner 会自行等待并重试 controller_manager 服务上线，
+    # 而 `ros2 control load_controller` 在 controller_manager（由 gazebo_ros2_control
+    # 插件异步创建）尚未来得及被发现时会永久卡住，导致控制器从未加载、
+    # 机械臂在 Gazebo 中因没有生效的控制器而瘫软下垂。
+    load_joint_state_controller = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['joint_state_broadcaster', '--controller-manager-timeout', '60'],
         output='screen'
     )
 
-    load_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 
-             'arm_controller'],
+    load_joint_trajectory_controller = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['arm_controller', '--controller-manager-timeout', '60'],
         output='screen'
         )
 
-    load_gripper_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 
-             'gripper_controller'],
+    load_gripper_trajectory_controller = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['gripper_controller', '--controller-manager-timeout', '60'],
         output='screen'
         )
-    
-    load_gripper8_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 
-             'gripper8_controller'],
+
+    load_gripper8_trajectory_controller = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['gripper8_controller', '--controller-manager-timeout', '60'],
         output='screen'
         )
 
