@@ -18,3 +18,7 @@ oculus_reader/oculus_reader
 **/__pycache__/
 .thumbs
 asserts/mujoco-py/
+# Own separate repo (go2_piper_joy_teleop + piper_isaacsim), colocated here
+# for building against piper_description/piper_with_gripper_moveit but not
+# part of this (agilexrobotics upstream) repo's own history.
+src/go2_piper_isaacsim_bridge/
