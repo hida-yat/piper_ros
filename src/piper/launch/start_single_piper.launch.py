@@ -55,10 +55,8 @@ def generate_launch_description():
             'gripper_val_mutiple': LaunchConfiguration('gripper_val_mutiple'),
             'gripper_exist': LaunchConfiguration('gripper_exist'),
         }],
-        remappings=[
-            ('joint_ctrl_single', '/joint_states'),
-            # ('joint_states_feedback', '/joint_states'),
-        ]
+        # /joint_states is feedback only.  Commands are received directly on
+        # /joint_command by piper_ctrl_single_node.
     )
 
     # Return the LaunchDescription

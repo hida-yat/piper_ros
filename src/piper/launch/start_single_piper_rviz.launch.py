@@ -68,9 +68,8 @@ def generate_launch_description():
             {'gripper_exist': LaunchConfiguration('gripper_exist')}
         ],
         ros_arguments=['--log-level', log_level],
-        remappings=[
-            ('joint_ctrl_single', '/joint_states')
-        ]
+        # /joint_states is feedback only.  Commands are received directly on
+        # /joint_command by piper_ctrl_single_node.
     )
 
     # Return the LaunchDescription object containing all the above elements
@@ -82,4 +81,3 @@ def generate_launch_description():
         gripper_val_mutiple_arg,
         piper_ctrl_node
     ])
-
