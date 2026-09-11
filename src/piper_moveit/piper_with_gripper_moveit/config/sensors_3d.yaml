@@ -1,27 +1,64 @@
-# Piperにはデプスカメラが無いので、センサープラグインは無効化する。
-# 有効にすると DepthImageOctomapUpdater の自己フィルタ用メッシュレンダラが
-# GLXコンテキスト生成に失敗し、move_groupが "X Error: BadAccess
-# (X_GLXMakeContextCurrent)" で即死する。
-sensors: []
-default_sensor:
-  far_clipping_plane_distance: 5.0
-  filtered_cloud_topic: filtered_cloud
-  image_topic: /head_mount_kinect/depth_registered/image_raw
-  max_update_rate: 1.0
-  near_clipping_plane_distance: 0.3
-  padding_offset: 0.03
-  padding_scale: 4.0
-  queue_size: 5
-  sensor_plugin: occupancy_map_monitor/DepthImageOctomapUpdater
-  shadow_threshold: 0.2
-kinect_depthimage:
-  far_clipping_plane_distance: 5.0
-  filtered_cloud_topic: filtered_cloud
-  image_topic: /head_mount_kinect/depth_registered/image_raw
-  max_update_rate: 1.0
-  near_clipping_plane_distance: 0.3
-  padding_offset: 0.03
-  padding_scale: 4.0
-  queue_size: 5
-  sensor_plugin: occupancy_map_monitor/DepthImageOctomapUpdater
-  shadow_threshold: 0.2
+# RealSense (go2_in_isaacsim's realsense.py) point cloud feeds MoveIt's
+# planning scene as an OctoMap, for the Piper to plan around obstacles it
+# sees. Uses PointCloudOctomapUpdater, NOT DepthImageOctomapUpdater -- the
+# latter's self-filter renders robot meshes through an offscreen GLX
+# context to mask them out of the depth image, which previously crashed
+# move_group outright ("X Error: BadAccess (X_GLXMakeContextCurrent)").
+# PointCloudOctomapUpdater's self-filter (point_containment_filter::
+# ShapeMask) masks points against the robot's *current joint state* using
+# plain CPU shape-containment tests instead, so it doesn't touch GLX at all.
+#
+# point_cloud_topic matches go2_in_isaacsim/go2_in_isaacsim/settings.py's
+# "realsense_pointcloud_topic" default ("realsense/depth/color/points",
+# under "ros2_namespace" if that Preference is non-empty). frame_id in the
+# message headers (go2_in_isaacsim's "realsense_frame_id",
+# "d435_color_optical_frame") needs a live TF path back to MoveIt's actual
+# model frame -- NOT base_link (an earlier version of this file assumed
+# that from piper.srdf having no virtual_joint, but move_group's own log
+# says otherwise: "No root/virtual joint specified in SRDF. Assuming fixed
+# joint" / "target frame 'world '" -- MoveIt implicitly roots an SRDF with
+# no virtual_joint at a synthesized "world" frame, not the URDF's root
+# link). robot_state_publisher happens to also have its own "world" link
+# (piper_description.xacro's URDF root), so this resolves entirely within
+# ITS OWN self-consistent tree: world -> base_link -> ... -> link6 (real
+# joint_states-driven FK) -> d435_color_optical_frame (realsense.py's one
+# fixed TF edge, parented at link6 -- see its docstring). Check with
+# `ros2 run tf2_ros tf2_echo world d435_color_optical_frame`.
+#
+# Make sure go2_in_isaacsim's "piper_publish_arm_tf" Preference is OFF
+# while this MoveIt stack's robot_state_publisher is running -- otherwise
+# Isaac Sim's own (Go2-relative, unrelated) "world" ALSO publishes
+# link1..link6, and tf2 flickers between the two same-named but unrelated
+# trees. Symptom, if this is left on by mistake: an OctoMap that keeps
+# growing stray vertical "fin"-shaped structures fanned out from the arm
+# instead of just the real scene -- each fin is one frame's worth of real
+# depth data landing at whichever of the two conflicting poses tf2
+# happened to resolve for that instant, never cleared since OctoMap never
+# revisits cells outside the sensor's current view.
+sensors:
+  - camera_pointcloud
+
+camera_pointcloud:
+  sensor_plugin: occupancy_map_monitor/PointCloudOctomapUpdater
+  point_cloud_topic: /realsense/depth/color/points
+  # Tightened from realsense.py's own 3.0m clip: the eye-in-hand camera's
+  # ~85deg FOV catches background scenery (walls/ceiling) at any real
+  # distance, and since OctoMap never clears a cell it stopped currently
+  # observing, every such far-away capture -- one per distinct wrist
+  # orientation as the arm moves/is teleop'd -- accumulates permanently as
+  # its own stray structure in the octomap. Restricting to the arm's
+  # actual small workspace keeps stray far returns out in the first place.
+  max_range: 1.5
+  point_subsample: 1
+  padding_offset: 0.02
+  padding_scale: 1.0
+  max_update_rate: 5.0
+  filtered_cloud_topic: /realsense/filtered_points
+
+# Matches MoveIt's actual (implicit, no-virtual-joint) model frame -- see
+# the long comment above. Confirmed from move_group's own startup log line
+# ("target frame 'world '"), not guessed.
+octomap_frame: world
+# 2cm voxels for first validation -- 1cm once this works and you want
+# lemon-harvesting-grade resolution; 5cm if 2cm is too slow.
+octomap_resolution: 0.02
